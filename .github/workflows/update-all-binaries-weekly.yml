@@ -47,8 +47,9 @@ jobs:
 
           echo "## 🚀 Weekly binaries update summary" >> "${GITHUB_STEP_SUMMARY}"
           echo "" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- 🕒 invoked at: ${invoked_at}" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- 📅 next planned run: ${planned_next_run}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "🕒 invoked at: ${invoked_at}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "📅 next planned run: ${planned_next_run}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
           echo "- 🐳 lazydocker: ${{ needs.update-lazydocker.result }} (version: ${{ needs.update-lazydocker.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
           echo "- 📊 htop: ${{ needs.update-htop.result }} (version: ${{ needs.update-htop.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
           echo "- ✍️ nano: ${{ needs.update-nano.result }} (version: ${{ needs.update-nano.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"

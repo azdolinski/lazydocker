@@ -48,5 +48,5 @@ jobs:
         id: detect_version
         if: always()
         run: |
-          version="$(ls -1 binaries/nano.v* 2>/dev/null | sed 's#^.*/nano\.##' | sort -V | tail -n 1)"
+          version="$(find binaries -maxdepth 1 -type f -name 'nano.v*' ! -name '*.md5' -printf '%f\n' 2>/dev/null | sed 's#^nano\.##' | sort -V | tail -n 1)"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
