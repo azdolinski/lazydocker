@@ -74,6 +74,8 @@ pushd "${NCURSES_SRC_DIR}" > /dev/null
   --with-shared=no \
   --with-normal \
   --with-termlib \
+  --with-default-terminfo-dir=/usr/share/terminfo \
+  --with-terminfo-dirs=/usr/lib/terminfo:/usr/lib64/terminfo:/usr/share/terminfo:/etc/terminfo:/lib/terminfo \
   --without-debug \
   --without-ada \
   --enable-widec
