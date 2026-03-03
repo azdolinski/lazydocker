@@ -17,6 +17,17 @@ fi
 VERSION_NO_V="${LATEST_TAG#v}"
 ASSET_URL="https://github.com/jesseduffield/lazydocker/releases/download/${LATEST_TAG}/lazydocker_${VERSION_NO_V}_Linux_x86_64.tar.gz"
 
+VERSIONED_BINARY_PATH="${BINARIES_DIR}/lazydocker.${LATEST_TAG}"
+LATEST_BINARY_PATH="${BINARIES_DIR}/lazydocker.latest"
+
+if [[ -f "${VERSIONED_BINARY_PATH}" ]]; then
+  install -m 0755 "${VERSIONED_BINARY_PATH}" "${LATEST_BINARY_PATH}"
+  md5sum "${VERSIONED_BINARY_PATH}" | awk '{print $1}' > "${VERSIONED_BINARY_PATH}.md5"
+  md5sum "${LATEST_BINARY_PATH}" | awk '{print $1}' > "${LATEST_BINARY_PATH}.md5"
+  echo "Latest lazydocker already compiled: ${LATEST_TAG}. Skipping download/build."
+  exit 0
+fi
+
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
@@ -29,9 +40,6 @@ if [[ ! -f "${TMP_DIR}/lazydocker" ]]; then
   echo "Downloaded archive did not contain the lazydocker binary."
   exit 1
 fi
-
-VERSIONED_BINARY_PATH="${BINARIES_DIR}/lazydocker.${LATEST_TAG}"
-LATEST_BINARY_PATH="${BINARIES_DIR}/lazydocker.latest"
 
 install -m 0755 "${TMP_DIR}/lazydocker" "${VERSIONED_BINARY_PATH}"
 install -m 0755 "${TMP_DIR}/lazydocker" "${LATEST_BINARY_PATH}"

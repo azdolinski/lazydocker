@@ -20,6 +20,17 @@ LATEST_TAG_VERSION="${LATEST_TAG_RAW#v}"
 LATEST_TAG="v${LATEST_TAG_VERSION}"
 ASSET_URL="https://github.com/htop-dev/htop/releases/download/${LATEST_TAG_VERSION}/htop-${LATEST_TAG_VERSION}.tar.xz"
 
+VERSIONED_BINARY_PATH="${BINARIES_DIR}/htop.${LATEST_TAG}"
+LATEST_BINARY_PATH="${BINARIES_DIR}/htop.latest"
+
+if [[ -f "${VERSIONED_BINARY_PATH}" ]]; then
+  install -m 0755 "${VERSIONED_BINARY_PATH}" "${LATEST_BINARY_PATH}"
+  md5sum "${VERSIONED_BINARY_PATH}" | awk '{print $1}' > "${VERSIONED_BINARY_PATH}.md5"
+  md5sum "${LATEST_BINARY_PATH}" | awk '{print $1}' > "${LATEST_BINARY_PATH}.md5"
+  echo "Latest htop already compiled: ${LATEST_TAG}. Skipping download/build."
+  exit 0
+fi
+
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
@@ -75,9 +86,6 @@ if ldd "${SRC_DIR}/htop" 2>&1 | grep -vq 'not a dynamic executable'; then
   ldd "${SRC_DIR}/htop" || true
   exit 1
 fi
-
-VERSIONED_BINARY_PATH="${BINARIES_DIR}/htop.${LATEST_TAG}"
-LATEST_BINARY_PATH="${BINARIES_DIR}/htop.latest"
 
 install -m 0755 "${SRC_DIR}/htop" "${VERSIONED_BINARY_PATH}"
 install -m 0755 "${SRC_DIR}/htop" "${LATEST_BINARY_PATH}"
