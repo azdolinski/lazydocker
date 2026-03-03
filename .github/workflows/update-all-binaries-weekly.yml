@@ -15,19 +15,16 @@ concurrency:
 jobs:
   update-lazydocker:
     uses: ./.github/workflows/update-lazydocker.yml
-    continue-on-error: true
 
   update-htop:
     needs: update-lazydocker
     if: always()
     uses: ./.github/workflows/update-htop.yml
-    continue-on-error: true
 
   update-nano:
     needs: update-htop
     if: always()
     uses: ./.github/workflows/update-nano.yml
-    continue-on-error: true
 
   summary:
     needs:
