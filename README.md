@@ -37,6 +37,16 @@ Current workflows:
 - `Update htop binary`
 - `Update nano binary`
 
+## Download examples
+
+You can download the latest binaries directly from this repository and save them without the `.latest` suffix:
+
+```bash
+wget -O lazydocker https://github.com/azdolinski/lazydocker/raw/refs/heads/main/binaries/lazydocker.latest
+wget -O htop https://github.com/azdolinski/lazydocker/raw/refs/heads/main/binaries/htop.latest
+wget -O nano https://github.com/azdolinski/lazydocker/raw/refs/heads/main/binaries/nano.latest
+```
+
 ## Notes
 
 - `lazydocker` is downloaded from release assets and stored as an unpacked executable.
