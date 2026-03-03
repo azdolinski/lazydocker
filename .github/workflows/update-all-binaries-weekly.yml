@@ -40,19 +40,7 @@ jobs:
       - name: Summary
         run: |
           invoked_at="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          planned_next_run="$(python3 - <<'PY'
-from datetime import datetime, timedelta, timezone
-
-now = datetime.now(timezone.utc)
-days_ahead = (6 - now.weekday()) % 7
-next_run = (now + timedelta(days=days_ahead)).replace(hour=3, minute=0, second=0, microsecond=0)
-
-if next_run <= now:
-    next_run += timedelta(days=7)
-
-print(next_run.strftime('%Y-%m-%d %H:%M:%S UTC'))
-PY
-)"
+          planned_next_run="$(date -u -d 'next sunday 03:00' '+%Y-%m-%d %H:%M:%S UTC')"
 
           echo "## Weekly binaries update summary" >> "${GITHUB_STEP_SUMMARY}"
           echo "" >> "${GITHUB_STEP_SUMMARY}"
