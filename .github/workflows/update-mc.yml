@@ -46,12 +46,19 @@ jobs:
             glib2-devel ncurses-devel gpm-devel tar gzip findutils
 
       - name: Download, build, and store latest mc
+        working-directory: ${{ github.workspace }}
         env:
           FORCE_REBUILD: ${{ inputs.force }}
         run: bash ./scripts/update_mc.sh
 
       - name: Commit and push changes
+        working-directory: ${{ github.workspace }}
         run: |
+          if [[ ! -d .git ]]; then
+            echo "Missing .git directory in ${PWD}."
+            exit 1
+          fi
+
           git add -A binaries
 
           if git diff --cached --quiet; then
@@ -68,6 +75,7 @@ jobs:
       - name: Detect resolved version
         id: detect_version
         if: always()
+        working-directory: ${{ github.workspace }}
         run: |
           version="$(find binaries -maxdepth 1 -type f -name 'mc.v*' ! -name '*.md5' -printf '%f\n' 2>/dev/null | sed 's#^mc\.##' | sort -V | tail -n 1)"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
