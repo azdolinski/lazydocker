@@ -32,13 +32,15 @@ jobs:
       version: ${{ steps.detect_version.outputs.version }}
 
     steps:
+      - name: Install git for checkout
+        run: dnf -y install git
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
           dnf -y install \
-            git \
             gcc gcc-c++ make \
             autoconf automake libtool pkgconf-pkg-config gettext gettext-devel \
             glib2-devel ncurses-devel gpm-devel tar gzip findutils
