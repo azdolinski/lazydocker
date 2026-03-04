@@ -123,21 +123,80 @@ while IFS= read -r file; do
 done < <(find . -type f \( -name 'Makefile' -o -name '*.la' \))
 
 make -j"$(nproc)"
+
+STAGE_DIR="${TMP_DIR}/mc-stage"
+make install DESTDIR="${STAGE_DIR}"
 popd > /dev/null
 
-if [[ ! -f "${SRC_DIR}/src/mc" ]]; then
-  echo "Build finished but mc binary is missing."
+STAGED_MC_BIN="${STAGE_DIR}/usr/local/bin/mc"
+
+if [[ ! -f "${STAGED_MC_BIN}" ]]; then
+  echo "Build finished but staged mc binary is missing."
   exit 1
 fi
 
-if ldd "${SRC_DIR}/src/mc" 2>&1 | grep -q 'libgpm'; then
+if ldd "${STAGED_MC_BIN}" 2>&1 | grep -q 'libgpm'; then
   echo "mc binary is still linked to dynamic libgpm."
-  ldd "${SRC_DIR}/src/mc" || true
+  ldd "${STAGED_MC_BIN}" || true
   exit 1
 fi
 
-install -m 0755 "${SRC_DIR}/src/mc" "${VERSIONED_BINARY_PATH}"
-install -m 0755 "${SRC_DIR}/src/mc" "${LATEST_BINARY_PATH}"
+LAUNCHER_STUB_PATH="${TMP_DIR}/mc-launcher.sh"
+cat > "${LAUNCHER_STUB_PATH}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+SELF_PATH="$(readlink -f "$0")"
+PAYLOAD_START_LINE="$(awk '/^__MC_PAYLOAD_BELOW__$/ {print NR + 1; exit 0; }' "${SELF_PATH}")"
+
+if [[ -z "${PAYLOAD_START_LINE}" ]]; then
+  echo "Corrupted mc bundle: payload marker not found."
+  exit 1
+fi
+
+RUN_DIR="${TMPDIR:-/tmp}/mc-bundle-$(id -u)-$(basename "${SELF_PATH}")"
+PREFIX_DIR="${RUN_DIR}/usr/local"
+
+if [[ ! -x "${PREFIX_DIR}/bin/mc" ]]; then
+  rm -rf "${RUN_DIR}"
+  mkdir -p "${RUN_DIR}"
+  tail -n +"${PAYLOAD_START_LINE}" "${SELF_PATH}" | tar -xzf - -C "${RUN_DIR}"
+fi
+
+if [[ -f "${PREFIX_DIR}/etc/mc/sfs.ini" && ! -f "${PREFIX_DIR}/share/mc/sfs.ini" ]]; then
+  ln -sf "${PREFIX_DIR}/etc/mc/sfs.ini" "${PREFIX_DIR}/share/mc/sfs.ini"
+fi
+
+# mc still uses hardcoded /usr/local paths for some resources.
+# If writable, map them to extracted bundle locations.
+if [[ -w "/usr/local" ]]; then
+  mkdir -p "/usr/local/libexec" "/usr/local/etc"
+
+  if [[ ! -e "/usr/local/libexec/mc" ]]; then
+    ln -s "${PREFIX_DIR}/libexec/mc" "/usr/local/libexec/mc" || true
+  fi
+
+  if [[ ! -e "/usr/local/etc/mc" ]]; then
+    ln -s "${PREFIX_DIR}/etc/mc" "/usr/local/etc/mc" || true
+  fi
+fi
+
+export MC_DATADIR="${PREFIX_DIR}/share/mc"
+export MC_LIBDIR="${PREFIX_DIR}/libexec/mc"
+export MC_EXTFS_DIR="${PREFIX_DIR}/libexec/mc/extfs.d"
+export MC_HOME="${HOME:-${RUN_DIR}}/.mc"
+
+exec "${PREFIX_DIR}/bin/mc" "$@"
+EOF
+
+{
+  cat "${LAUNCHER_STUB_PATH}"
+  echo "__MC_PAYLOAD_BELOW__"
+  tar -czf - -C "${STAGE_DIR}" .
+} > "${VERSIONED_BINARY_PATH}"
+
+install -m 0755 "${VERSIONED_BINARY_PATH}" "${LATEST_BINARY_PATH}"
+chmod 0755 "${VERSIONED_BINARY_PATH}"
 
 md5sum "${VERSIONED_BINARY_PATH}" | awk '{print $1}' > "${VERSIONED_BINARY_PATH}.md5"
 md5sum "${LATEST_BINARY_PATH}" | awk '{print $1}' > "${LATEST_BINARY_PATH}.md5"
