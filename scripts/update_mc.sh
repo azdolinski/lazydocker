@@ -110,6 +110,7 @@ if [[ ! -f "${SRC_DIR}/configure" ]]; then
   fi
 fi
 
+export PKG_CONFIG_PATH="${NCURSES_INSTALL_PREFIX}/lib/pkgconfig"
 export CPPFLAGS="-I${NCURSES_INSTALL_PREFIX}/include/ncursesw"
 export LDFLAGS="-L${NCURSES_INSTALL_PREFIX}/lib"
 export LIBS="-lm"
@@ -117,7 +118,7 @@ export LIBS="-lm"
 ./configure \
   --without-x \
   --without-gpm \
-  --with-screen=ncurses
+  --with-screen=ncursesw
 
 # Force static ncurses/tinfo archives to avoid runtime ABI mismatch on Flatcar.
 sed -i \
