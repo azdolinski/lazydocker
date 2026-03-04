@@ -38,6 +38,7 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf -y install \
+            git \
             gcc gcc-c++ make \
             autoconf automake libtool pkgconf-pkg-config gettext gettext-devel \
             glib2-devel ncurses-devel gpm-devel tar gzip findutils
