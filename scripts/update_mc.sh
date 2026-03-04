@@ -92,12 +92,29 @@ fi
 
 ./configure \
   --without-x \
+  --with-gpm-mouse \
   --with-screen=ncurses
+
+GPM_STATIC_LIB="$(find /usr/lib /usr/lib64 /usr/lib/x86_64-linux-gnu -type f -name 'libgpm.a' 2>/dev/null | head -n 1)"
+if [[ -z "${GPM_STATIC_LIB}" ]]; then
+  echo "Could not find static libgpm.a. Install gpm static development package."
+  exit 1
+fi
+
+# Force static gpm linkage so mc works on Flatcar without libgpm.so.2.
+sed -i -E "s#(^|[[:space:]])-lgpm([[:space:]]|$)# ${GPM_STATIC_LIB} #g" Makefile src/Makefile lib/Makefile 2>/dev/null || true
+
 make -j"$(nproc)"
 popd > /dev/null
 
 if [[ ! -f "${SRC_DIR}/src/mc" ]]; then
   echo "Build finished but mc binary is missing."
+  exit 1
+fi
+
+if ldd "${SRC_DIR}/src/mc" 2>&1 | grep -q 'libgpm'; then
+  echo "mc binary is still linked to dynamic libgpm."
+  ldd "${SRC_DIR}/src/mc" || true
   exit 1
 fi
 
