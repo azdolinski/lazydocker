@@ -116,6 +116,12 @@ sed -i \
   -e 's#-lgpm#-Wl,-Bstatic -lgpm -Wl,-Bdynamic#g' \
   Makefile src/Makefile lib/Makefile 2>/dev/null || true
 
+# Autotools/libtool may still append dynamic -lgpm later in nested Makefiles.
+# Remove dynamic gpm flags and rely on explicit static libgpm.a injected via LIBS.
+while IFS= read -r file; do
+  sed -i -E 's#(^|[[:space:]])-lgpm([[:space:]]|$)# #g' "${file}"
+done < <(find . -type f \( -name 'Makefile' -o -name '*.la' \))
+
 make -j"$(nproc)"
 popd > /dev/null
 
