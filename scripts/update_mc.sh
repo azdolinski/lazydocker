@@ -66,10 +66,9 @@ ARCHIVE_PATH="${TMP_DIR}/mc.tar"
 ASSET_URL="https://api.github.com/repos/MidnightCommander/mc/tarball/refs/tags/${LATEST_TAG_RAW}"
 
 retry 5 10 curl -fL "${ASSET_URL}" -o "${ARCHIVE_PATH}"
-top_level_dir="$(tar -tf "${ARCHIVE_PATH}" | head -n 1 | cut -d/ -f1)"
 tar -xf "${ARCHIVE_PATH}" -C "${TMP_DIR}"
 
-SRC_DIR="${TMP_DIR}/${top_level_dir}"
+SRC_DIR="$(find "${TMP_DIR}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
 if [[ -z "${SRC_DIR}" ]]; then
   echo "Could not find extracted mc source directory."
   exit 1
