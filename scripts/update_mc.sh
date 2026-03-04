@@ -29,15 +29,19 @@ retry() {
   return 1
 }
 
-API_URL="https://api.github.com/repos/MidnightCommander/mc/releases/latest"
-LATEST_TAG_RAW="$(retry 5 10 curl -fsSL "${API_URL}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
+MC_TAGS_API_URL="https://api.github.com/repos/MidnightCommander/mc/tags?per_page=100"
+LATEST_TAG_RAW="$(retry 5 10 curl -fsSL "${MC_TAGS_API_URL}" | python3 -c 'import json,re,sys
+tags=json.load(sys.stdin)
+stable=[t["name"] for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t.get("name",""))]
+print(stable[0] if stable else "")')"
 
-if [[ -z "${LATEST_TAG_RAW}" || "${LATEST_TAG_RAW}" == "null" ]]; then
-  echo "Could not resolve latest mc tag from GitHub API."
+if [[ -z "${LATEST_TAG_RAW}" ]]; then
+  echo "Could not resolve latest mc tag from GitHub tags."
   exit 1
 fi
 
 LATEST_VERSION="${LATEST_TAG_RAW#v}"
+LATEST_VERSION="${LATEST_VERSION#mc-}"
 LATEST_TAG="v${LATEST_VERSION}"
 
 VERSIONED_BINARY_PATH="${BINARIES_DIR}/mc.${LATEST_TAG}"
@@ -58,15 +62,21 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
-ARCHIVE_PATH="${TMP_DIR}/mc.tar.xz"
-ASSET_URL="https://ftp.osuosl.org/pub/midnightcommander/mc-${LATEST_VERSION}.tar.xz"
+ARCHIVE_PATH="${TMP_DIR}/mc.tar"
+ASSET_URL="https://api.github.com/repos/MidnightCommander/mc/tarball/refs/tags/${LATEST_TAG_RAW}"
 
 retry 5 10 curl -fL "${ASSET_URL}" -o "${ARCHIVE_PATH}"
-tar -xJf "${ARCHIVE_PATH}" -C "${TMP_DIR}"
+top_level_dir="$(tar -tf "${ARCHIVE_PATH}" | head -n 1 | cut -d/ -f1)"
+tar -xf "${ARCHIVE_PATH}" -C "${TMP_DIR}"
 
-SRC_DIR="$(find "${TMP_DIR}" -maxdepth 1 -type d -name 'mc-*' | head -n 1)"
+SRC_DIR="${TMP_DIR}/${top_level_dir}"
 if [[ -z "${SRC_DIR}" ]]; then
   echo "Could not find extracted mc source directory."
+  exit 1
+fi
+
+if [[ ! -d "${SRC_DIR}" ]]; then
+  echo "Could not find extracted mc source directory: ${SRC_DIR}"
   exit 1
 fi
 
