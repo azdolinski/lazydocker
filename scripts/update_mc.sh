@@ -80,6 +80,16 @@ if [[ ! -d "${SRC_DIR}" ]]; then
 fi
 
 pushd "${SRC_DIR}" > /dev/null
+
+if [[ ! -f "${SRC_DIR}/configure" ]]; then
+  if [[ -f "${SRC_DIR}/autogen.sh" ]]; then
+    bash ./autogen.sh
+  else
+    echo "Missing configure and autogen.sh in mc source directory."
+    exit 1
+  fi
+fi
+
 ./configure \
   --without-x \
   --with-screen=ncurses
