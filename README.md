@@ -8,6 +8,7 @@ Currently supported projects:
 - `htop` from `https://github.com/htop-dev/htop`
 - `nano` from `https://git.savannah.gnu.org/git/nano.git`
 - `docker-compose` from `https://github.com/docker/compose`
+- `mc` from `https://github.com/MidnightCommander/mc`
 
 ## Purpose
 
@@ -38,11 +39,12 @@ The main updater workflow runs once a week on Sunday at 03:00 UTC and also suppo
 
 Current workflows:
 
-- `Update all binaries weekly` (scheduled orchestrator that runs referenced subworkflows in sequence: lazydocker -> htop -> nano -> docker-compose)
+- `Update all binaries weekly` (scheduled orchestrator that runs referenced subworkflows in sequence: lazydocker -> htop -> nano -> docker-compose -> mc)
 - `Update lazydocker binary`
 - `Update htop binary`
 - `Update nano binary`
 - `Update docker-compose binary`
+- `Update mc binary`
 
 ## Download examples
 
@@ -53,6 +55,7 @@ wget -O lazydocker https://github.com/azdolinski/binaries/raw/refs/heads/main/bi
 wget -O htop https://github.com/azdolinski/binaries/raw/refs/heads/main/binaries/htop.latest
 wget -O nano https://github.com/azdolinski/binaries/raw/refs/heads/main/binaries/nano.latest
 wget -O docker-compose https://github.com/azdolinski/binaries/raw/refs/heads/main/binaries/docker-compose.latest
+wget -O mc https://github.com/azdolinski/binaries/raw/refs/heads/main/binaries/mc.latest
 ```
 
 ## Notes
@@ -61,6 +64,7 @@ wget -O docker-compose https://github.com/azdolinski/binaries/raw/refs/heads/mai
 - `htop` is downloaded from release source archive, built in CI, and then stored as an executable.
 - `nano` is cloned from Savannah Git by latest tag, built in CI, and then stored as an executable.
 - `docker-compose` is downloaded from release assets and stored as an unpacked executable.
+- `mc` is built from the latest source release tarball and stored as an executable.
 - Runtime compatibility target is Flatcar/Fedora; binaries are tuned to run there reliably.
 - Each workflow commits only when files in `binaries/` changed.
 - This structure is designed to be extended with more tools in future.

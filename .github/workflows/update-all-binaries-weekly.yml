@@ -31,12 +31,18 @@ jobs:
     if: always()
     uses: ./.github/workflows/update-docker-compose.yml
 
+  update-mc:
+    needs: update-docker-compose
+    if: always()
+    uses: ./.github/workflows/update-mc.yml
+
   summary:
     needs:
       - update-lazydocker
       - update-htop
       - update-nano
       - update-docker-compose
+      - update-mc
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -54,6 +60,7 @@ jobs:
           echo "- 📊 htop: ${{ needs.update-htop.result }} (version: ${{ needs.update-htop.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
           echo "- ✍️ nano: ${{ needs.update-nano.result }} (version: ${{ needs.update-nano.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
           echo "- 🧩 docker-compose: ${{ needs.update-docker-compose.result }} (version: ${{ needs.update-docker-compose.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- 🗂️ mc: ${{ needs.update-mc.result }} (version: ${{ needs.update-mc.outputs.version || 'unknown' }})" >> "${GITHUB_STEP_SUMMARY}"
 
       - name: 🚨 Fail workflow if any updater failed
         run: |
@@ -73,6 +80,10 @@ jobs:
 
           if [[ "${{ needs.update-docker-compose.result }}" != "success" ]]; then
             failed="${failed} docker-compose"
+          fi
+
+          if [[ "${{ needs.update-mc.result }}" != "success" ]]; then
+            failed="${failed} mc"
           fi
 
           if [[ -n "${failed}" ]]; then

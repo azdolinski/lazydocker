@@ -1,0 +1,66 @@
+name: Update mc binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force rebuild even if latest version already exists"
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      force:
+        description: "Force rebuild even if latest version already exists"
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      version:
+        description: "Resolved mc version"
+        value: ${{ jobs.update.outputs.version }}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.detect_version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config gettext autopoint libglib2.0-dev libncursesw5-dev libgpm-dev
+
+      - name: Download, build, and store latest mc
+        env:
+          FORCE_REBUILD: ${{ inputs.force }}
+        run: bash ./scripts/update_mc.sh
+
+      - name: Commit and push changes
+        run: |
+          git add -A binaries
+
+          if git diff --cached --quiet; then
+            echo "No changes in binaries directory."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update mc binary"
+          git pull --no-rebase origin main
+          git push
+
+      - name: Detect resolved version
+        id: detect_version
+        if: always()
+        run: |
+          version="$(find binaries -maxdepth 1 -type f -name 'mc.v*' ! -name '*.md5' -printf '%f\n' 2>/dev/null | sed 's#^mc\.##' | sort -V | tail -n 1)"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
