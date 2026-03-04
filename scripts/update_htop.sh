@@ -79,6 +79,12 @@ export LDFLAGS="-L${NCURSES_INSTALL_PREFIX}/lib"
 export LIBS="-lm"
 
 ./configure
+
+# Force local static ncurses/tinfo archives to avoid runtime mismatch with host libtinfo.
+sed -i \
+  -e "s#-lncursesw -ltinfo#${NCURSES_INSTALL_PREFIX}/lib/libncursesw.a ${NCURSES_INSTALL_PREFIX}/lib/libtinfow.a#g" \
+  Makefile
+
 make -j"$(nproc)"
 popd > /dev/null
 
