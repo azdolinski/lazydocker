@@ -87,6 +87,10 @@ make -j"$(nproc)"
 make install
 popd > /dev/null
 
+# Create ncurses.pc alias so mc configure finds ncursesw under the generic name.
+ln -sf "${NCURSES_INSTALL_PREFIX}/lib/pkgconfig/ncursesw.pc" \
+        "${NCURSES_INSTALL_PREFIX}/lib/pkgconfig/ncurses.pc"
+
 ARCHIVE_PATH="${TMP_DIR}/mc.tar"
 ASSET_URL="https://api.github.com/repos/MidnightCommander/mc/tarball/refs/tags/${LATEST_TAG_RAW}"
 
@@ -114,10 +118,14 @@ export PKG_CONFIG_PATH="${NCURSES_INSTALL_PREFIX}/lib/pkgconfig"
 export CPPFLAGS="-I${NCURSES_INSTALL_PREFIX}/include/ncursesw"
 export LDFLAGS="-L${NCURSES_INSTALL_PREFIX}/lib"
 export LIBS="-lm"
+# Pass ncurses flags directly so configure skips its own pkg-config detection.
+export NCURSES_CFLAGS="-I${NCURSES_INSTALL_PREFIX}/include/ncursesw"
+export NCURSES_LIBS="-L${NCURSES_INSTALL_PREFIX}/lib -lncursesw"
 
 ./configure \
   --without-x \
   --without-gpm \
+  --disable-mouse \
   --with-screen=ncursesw
 
 # Force static ncurses/tinfo archives to avoid runtime ABI mismatch on Flatcar.
