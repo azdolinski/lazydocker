@@ -88,6 +88,7 @@ make install
 popd > /dev/null
 
 # Create ncurses.pc alias so mc configure finds ncursesw under the generic name.
+mkdir -p "${NCURSES_INSTALL_PREFIX}/lib/pkgconfig"
 ln -sf "${NCURSES_INSTALL_PREFIX}/lib/pkgconfig/ncursesw.pc" \
         "${NCURSES_INSTALL_PREFIX}/lib/pkgconfig/ncurses.pc"
 
