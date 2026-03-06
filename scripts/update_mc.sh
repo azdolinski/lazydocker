@@ -8,8 +8,6 @@ mkdir -p "${BINARIES_DIR}"
 
 FORCE_REBUILD="${FORCE_REBUILD:-false}"
 MC_TAGS_API_URL="https://api.github.com/repos/MidnightCommander/mc/tags?per_page=100"
-NCURSES_VERSION="6.5"
-NCURSES_URL="https://invisible-mirror.net/archives/ncurses/ncurses-${NCURSES_VERSION}.tar.gz"
 
 retry() {
   local attempts="$1"
@@ -64,29 +62,6 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
-NCURSES_ARCHIVE_PATH="${TMP_DIR}/ncurses.tar.gz"
-NCURSES_SRC_DIR="${TMP_DIR}/ncurses-src"
-NCURSES_INSTALL_PREFIX="${TMP_DIR}/ncurses-static"
-
-retry 5 10 curl -fL "${NCURSES_URL}" -o "${NCURSES_ARCHIVE_PATH}"
-tar -xzf "${NCURSES_ARCHIVE_PATH}" -C "${TMP_DIR}"
-mv "${TMP_DIR}/ncurses-${NCURSES_VERSION}" "${NCURSES_SRC_DIR}"
-
-pushd "${NCURSES_SRC_DIR}" > /dev/null
-./configure \
-  --prefix="${NCURSES_INSTALL_PREFIX}" \
-  --with-shared=no \
-  --with-normal \
-  --with-termlib \
-  --with-default-terminfo-dir="${NCURSES_INSTALL_PREFIX}/share/terminfo" \
-  --with-terminfo-dirs="${NCURSES_INSTALL_PREFIX}/share/terminfo:/usr/lib/terminfo:/usr/lib64/terminfo:/usr/share/terminfo:/etc/terminfo:/lib/terminfo" \
-  --without-debug \
-  --without-ada \
-  --enable-widec
-make -j"$(nproc)"
-make install
-popd > /dev/null
-
 ARCHIVE_PATH="${TMP_DIR}/mc.tar"
 ASSET_URL="https://api.github.com/repos/MidnightCommander/mc/tarball/refs/tags/${LATEST_TAG_RAW}"
 
@@ -122,12 +97,6 @@ ac_cv_lib_gpm_Gpm_Open=no \
 # Remove any accidental gpm linkage from generated build files.
 find . -type f \( -name 'Makefile' -o -name 'Makefile.in' \) -print0 | \
   xargs -0 sed -i 's/[[:space:]]-lgpm//g'
-
-# Force static ncurses/tinfo archives to avoid runtime ABI mismatch on Flatcar.
-sed -i \
-  -e "s#-lncursesw -ltinfo#${NCURSES_INSTALL_PREFIX}/lib/libncursesw.a ${NCURSES_INSTALL_PREFIX}/lib/libtinfow.a#g" \
-  -e "s#-lncursesw#${NCURSES_INSTALL_PREFIX}/lib/libncursesw.a ${NCURSES_INSTALL_PREFIX}/lib/libtinfow.a#g" \
-  Makefile
 
 make -j"$(nproc)"
 
